@@ -50,7 +50,9 @@
           <!-- <% } %> -->
 
           <!-- <% if(currUser) { %> -->
-          <a class="nav-link" href="/logout"><b>Log out</b></a>
+          <form method="POST" action="/logout" class="d-inline">
+            <button type="submit" class="nav-link btn btn-link"><b>Log out</b></button>
+          </form>
           <!-- <% } %> -->
         </div>
       </div>

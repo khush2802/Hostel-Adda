@@ -23,14 +23,28 @@ module.exports.saveRedirectUrl=(req,res,next)=>{
 };
 
 module.exports.isOwner=async (req,res,next)=>{
-    let {id}=req.params;
-    let listing=await Listing.findById(id);
-    if( !listing.owner.equals(res.locals.currUser._id))
+    try
     {
-        req.flash("error","you are not the owner of this listing");
-        return res.redirect(`/listings/${id}`);
+        let {id}=req.params;
+        let listing=await Listing.findById(id);
+        if(!listing)
+        {
+            req.flash("error","Listing you requested for does not exist!");
+            return res.redirect("/listings");
+        }
+        // Compare against the signed-in user from the session, never against request data.
+        if(!req.user || !listing.owner || !listing.owner.equals(req.user._id))
+        {
+            req.flash("error","you are not the owner of this listing");
+            return res.redirect(`/listings/${id}`);
+        }
+        next();
     }
-    next();
+    catch(err)
+    {
+        // Express 4 doesn't catch rejected promises; without this a bad id crashes the server.
+        next(err);
+    }
 };
 
 module.exports.validateListing=(req,res,next)=>{
@@ -61,12 +75,24 @@ module.exports.validateReview=(req,res,next)=>{
 };
 
 module.exports.isReviewAuthor=async (req,res,next)=>{
-    let {id,reviewId}=req.params;
-    let review=await Review.findById(reviewId);
-    if( !review.author.equals(res.locals.currUser._id))
+    try
     {
-        req.flash("error","you are not the author of this review");
-        return res.redirect(`/listings/${id}`);
+        let {id,reviewId}=req.params;
+        let review=await Review.findById(reviewId);
+        if(!review)
+        {
+            req.flash("error","Review you requested for does not exist!");
+            return res.redirect(`/listings/${id}`);
+        }
+        if(!req.user || !review.author || !review.author.equals(req.user._id))
+        {
+            req.flash("error","you are not the author of this review");
+            return res.redirect(`/listings/${id}`);
+        }
+        next();
     }
-    next();
+    catch(err)
+    {
+        next(err);
+    }
 };

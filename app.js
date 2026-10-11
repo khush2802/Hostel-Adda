@@ -54,19 +54,24 @@ const store=MongoStore.create({
     touchAfter: 24*3600,
 });
 
-store.on("error",()=>{
+store.on("error",(err)=>{
     console.log("Error in MONGO SESSION STORE",err);
 });
+
+if(process.env.NODE_ENV === "production"){
+    app.set("trust proxy",1); // behind Render's proxy, so secure cookies work
+}
 
 const sessionOptions={
     store,
     secret:process.env.SECRET,
     resave:false,
-    saveUninitialized:true,
+    saveUninitialized:false,
     cookie:{
-        expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
-        maxage: 7 * 24 * 60 * 60 * 1000, 
+        maxAge: 7 * 24 * 60 * 60 * 1000, // one week from each response, not from server start
         httpOnly:true,
+        sameSite:"lax",                   // not sent on cross-site form posts (CSRF protection)
+        secure: process.env.NODE_ENV === "production",
     },
 };
 
